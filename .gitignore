@@ -1,0 +1,3 @@
+# Keep only the built files
+*.lua
+!*.md
