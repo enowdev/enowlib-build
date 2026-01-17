@@ -1,11 +1,10 @@
 # EnowLib Build
 
-This repository contains the built and obfuscated versions of EnowLib.
+This repository contains the obfuscated build of EnowLib.
 
 ## Files
 
-- `enowlib.lua` - Non-obfuscated build
-- `enowlib.obfuscated.lua` - Obfuscated build (recommended for production)
+- `enowlib.lua` - Obfuscated production build
 
 ## Usage
 
