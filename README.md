@@ -26,7 +26,7 @@ is bandwidth and parse time you do not pay for.
 ### Minimal
 
 ```lua
-local EnowLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/enowdev/enowlib-build/main/enowlib.lua"))()
+local EnowLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/enowdev/enowlib-build/refs/heads/main/enowlib.lua"))()
 
 local Window = EnowLib:CreateWindow({
     Title = "My Script"
@@ -59,7 +59,7 @@ is the established convention in the examples, but it is a tab instance.
 ### With managers
 
 ```lua
-local BASE = "https://raw.githubusercontent.com/enowdev/enowlib-build/main/"
+local BASE = "https://raw.githubusercontent.com/enowdev/enowlib-build/refs/heads/main/"
 
 local EnowLib = loadstring(game:HttpGet(BASE .. "enowlib.lua"))()
 local InterfaceManager = loadstring(game:HttpGet(BASE .. "managers/interfacemanager.lua"))()
