@@ -251,6 +251,29 @@ MainCategory:AddItem({
                 InterfaceManager:ClearAllNotifications()
             end
         })
+
+        -- Regression check: these used to all land on the same row, because
+        -- the entry animation and the stack positioning fought over Y.
+        local stacking = window:AddSection({ Title = "Stacking check" })
+
+        stacking:AddButton({
+            Text = "Fire 4 at once (must stack, not overlap)",
+            Callback = function()
+                Notification:Success("First", "Should be lowest")
+                Notification:Info("Second", "Above the first")
+                Notification:Warning("Third", "Above the second")
+                Notification:Error("Fourth", "Topmost")
+            end
+        })
+
+        stacking:AddButton({
+            Text = "Fire 3 short ones (gap must close as they expire)",
+            Callback = function()
+                Notification:Info("A", "2 seconds", 2)
+                Notification:Info("B", "4 seconds", 4)
+                Notification:Info("C", "6 seconds", 6)
+            end
+        })
     end
 })
 
@@ -279,6 +302,22 @@ SettingsCategory:AddItem({
             end
         })
         SaveManager:RegisterComponent("InterfaceManager_Theme", themeDropdown)
+
+        -- Regression check: SetTheme briefly yields while refreshing the
+        -- active tab. Switching tabs during that window used to snap you back
+        -- to the tab you started on.
+        theme:AddButton({
+            Text = "Cycle themes (switch tabs while it runs)",
+            Callback = function()
+                task.spawn(function()
+                    for _, name in ipairs(InterfaceManager:GetThemeList()) do
+                        InterfaceManager:SetTheme(name)
+                        task.wait(0.4)
+                    end
+                    print("[Theme] cycle finished, you should still be on whatever tab you picked")
+                end)
+            end
+        })
 
         local visuals = window:AddSection({ Title = "Visuals" })
 
@@ -412,6 +451,43 @@ SettingsCategory:AddItem({
                 Notification:Success("Auto-load set", "'" .. name .. "' loads on startup")
             end
         })
+
+        -- Regression check: SetValue restores a component without firing its
+        -- callback, so loading a config must not replay side effects. It also
+        -- has to update what is on screen, not just the stored value.
+        local restore = window:AddSection({ Title = "Restore check" })
+
+        restore:AddButton({
+            Text = "SetValue must update the UI, silently",
+            Callback = function()
+                local fired = false
+                local probe = nil
+
+                probe = restore:AddTextBox({
+                    Text = "Probe (watch this box change)",
+                    Default = "before",
+                    Callback = function()
+                        fired = true
+                    end
+                })
+
+                task.wait(0.5)
+                probe:SetValue("after")
+                task.wait(0.1)
+
+                print("[Restore] stored value:", probe.Value)
+                print("[Restore] box shows:", probe.InputBox and probe.InputBox.Text)
+                print("[Restore] callback fired (must be false):", fired)
+
+                if probe.Value == "after"
+                    and probe.InputBox and probe.InputBox.Text == "after"
+                    and not fired then
+                    Notification:Success("Restore OK", "Value, UI and silence all correct")
+                else
+                    Notification:Error("Restore broken", "See console")
+                end
+            end
+        })
     end
 })
 
@@ -428,6 +504,10 @@ BetterLoad:QueueTab(SettingsCategory, {
 })
 
 BetterLoad:ProcessQueue()
+
+-- Caches ReplicatedStorage's top-level children so later lookups skip the
+-- traversal. It does not make Roblox load anything sooner.
+BetterLoad:OptimizeReplicatedStorage()
 
 --------------------------------------------------------------------------------
 -- Teardown
@@ -455,6 +535,23 @@ SettingsCategory:AddItem({
             Text = "Destroy (full teardown)",
             Callback = function()
                 Window:Destroy()
+            end
+        })
+
+        local cache = window:AddSection({ Title = "BetterLoad cache" })
+
+        cache:AddButton({
+            Text = "Report cached ReplicatedStorage items",
+            Callback = function()
+                local items = BetterLoad:GetCachedItems()
+                print("[BetterLoad] cached items:", #items)
+
+                local first = items[1]
+                if first then
+                    print("[BetterLoad] lookup by name:", BetterLoad:GetCachedItem(first.Name) ~= nil)
+                end
+
+                Notification:Info("Cache", #items .. " items cached")
             end
         })
 
